@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Item Upgrades</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--parchment:#f2e8d0;--ink:#2a1a0e;--rust:#8b3a1a;--gold:#c9923a;--fade:#9a8060}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a0f07;background-image:radial-gradient(ellipse at 20% 50%,#2a1205 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,#1f0d04 0%,transparent 40%);min-height:100vh;padding:2rem 1rem;font-family:'Courier Prime',monospace;color:var(--ink)}
+.page{max-width:860px;margin:0 auto;background:var(--parchment);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E"),linear-gradient(135deg,#ede0c4 0%,#f5ead0 40%,#ede0c4 100%);box-shadow:0 0 60px rgba(0,0,0,0.8),inset 0 0 30px rgba(0,0,0,0.05);padding:3rem 2.5rem;position:relative;border:1px solid #c9b08a}
+.page::before{content:'';position:absolute;inset:8px;border:1px solid rgba(139,58,26,0.2);pointer-events:none}
+h1{font-family:'Playfair Display',serif;font-size:2.2rem;text-align:center;color:var(--rust);letter-spacing:0.05em;margin-bottom:0.3rem;text-transform:uppercase}
+.subtitle{text-align:center;font-size:0.75rem;color:var(--fade);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:2px solid var(--gold);position:relative}
+.subtitle::after{content:'✦';position:absolute;bottom:-0.7rem;left:50%;transform:translateX(-50%);background:var(--parchment);padding:0 0.5rem;color:var(--gold);font-size:0.9rem}
+.progress-bar-wrap{background:rgba(139,58,26,0.15);border-radius:2px;height:6px;margin-bottom:2rem;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--rust),var(--gold));border-radius:2px;transition:width 0.3s ease}
+.progress-label{text-align:center;font-size:0.7rem;color:var(--fade);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem}
+.section{margin-bottom:2.5rem}
+h2{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--rust);letter-spacing:0.1em;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:0.4rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+h2 .section-count{font-family:'Courier Prime',monospace;font-size:0.7rem;color:var(--fade);font-weight:400;margin-left:auto}
+.subsection-label{font-size:0.9rem;color:var(--fade);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.6rem;text-align:center;display:flex;align-items:center;gap:0.75em;}
+.subsection-label::before,.subsection-label::after{content:'';flex:1;height:1px;background:var(--fade);opacity:0.4;}
+
+/* Single-item checkbox (qty=1) */
+.item-single{display:flex;align-items:center;gap:0.4rem;cursor:pointer;border-radius:2px;transition:background 0.15s;user-select:none;padding:0.2rem}
+.item-single:hover{background:rgba(139,58,26,0.08)}
+.item-single .label{font-size:0.72rem;color:var(--fade);letter-spacing:0.05em}
+.item-single.checked .label{text-decoration:line-through;color:#c0a880}
+.item-single.checked .box{background:var(--rust);border-color:var(--rust)}
+.item-single.checked .box::after{opacity:1}
+
+/* Trapper / Pearson / Trinket upgrade groups */
+.trapper-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.4rem 1.5rem;align-items:start}
+.pearson-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.4rem 1.5rem;align-items:start}
+.upgrade-group{margin-bottom:0.6rem}
+.upgrade-group-name{font-size:0.72rem;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-bottom:0.25rem;padding-left:0.1rem}
+.upgrade-group.all-done .upgrade-group-name{text-decoration:line-through;color:#c0a880}
+.upgrade-ingredients{display:flex;flex-direction:column;gap:0.15rem;padding-left:0.2rem}
+.ing-row{display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;border-radius:2px;padding:0.1rem 0.2rem}
+.ing-label{font-size:0.7rem;color:var(--fade);flex-shrink:0}
+.ing-row.all-done .ing-label{text-decoration:line-through;color:#c0a880}
+
+/* Found Trinkets & Talismans */
+.found-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.4rem 1.5rem;align-items:start;}
+.found-item{margin-bottom:0.6rem;cursor:pointer;border-radius:2px;padding:0.1rem 0.2rem;transition:background 0.15s;user-select:none;}
+.found-item:hover{background:rgba(139,58,26,0.08);}
+.found-item-header{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;}
+.found-item-name{font-size:0.72rem;color:var(--ink);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;}
+.found-item.checked .found-item-name{text-decoration:line-through;color:#c0a880;}
+.found-item.checked .box{background:var(--rust);border-color:var(--rust);}
+.found-item.checked .box::after{opacity:1;}
+.found-item-effect{font-size:0.65rem;color:var(--fade);font-style:italic;padding-left:0.1rem;margin-top:0.15rem;opacity:0.8;}
+.found-item-location{font-size:0.63rem;color:var(--fade);padding-left:0.1rem;margin-top:0.1rem;opacity:0.7;}
+
+/* Shared box */
+.box{width:14px;height:14px;border:1.5px solid #8a6840;border-radius:1px;flex-shrink:0;position:relative;transition:all 0.15s;margin-top:1px}
+.box::after{content:'✓';position:absolute;top:-2px;left:1px;color:var(--parchment);font-size:11px;opacity:0;transition:opacity 0.15s}
+
+/* Ingredient box (standalone, not child of .item) */
+.ing-box{width:14px;height:14px;border:1.5px solid #8a6840;border-radius:1px;flex-shrink:0;position:relative;transition:all 0.15s;margin-top:1px;cursor:pointer}
+.ing-box::after{content:'✓';position:absolute;top:-2px;left:1px;color:var(--parchment);font-size:11px;opacity:0;transition:opacity 0.15s}
+.ing-box:hover{background:rgba(139,58,26,0.12)}
+.ing-box.checked{background:var(--rust);border-color:var(--rust)}
+.ing-box.checked::after{opacity:1}
+
+.legendary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.3rem 1rem}
+</style>
+</head>
+<body>
+<div class="page">
+<h1>Item Upgrades</h1>
+<div class="subtitle">Red Dead Redemption II</div>
+<div class="progress-label" id="progressLabel">0 of 0 items collected</div>
+<div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+
+<div class="section">
+  <h2>&#x2B21; Pearson's Upgrades <span class="section-count" id="pearson-count"></span></h2>
+  <div class="subsection-label">Satchels</div>
+  <div class="pearson-grid" id="pearson-satchels"></div>
+  <div class="subsection-label" style="margin-top:0.5rem;">Camp</div>
+  <div class="pearson-grid" id="pearson-camp"></div>
+</div>
+
+<div class="section">
+  <h2>&#x2B21; Legendary Animals <span class="section-count" id="legendary-count"></span></h2>
+  <div class="legendary-grid" id="legendary"></div>
+</div>
+
+<div class="section">
+  <h2>&#x2B21; Trapper Upgrades <span class="section-count" id="trapper-count"></span></h2>
+  <div class="subsection-label">Garment Sets</div>
+  <div class="trapper-grid" id="trapper-garments"></div>
+  <div class="subsection-label" style="margin-top:0.5rem;">Hats</div>
+  <div class="trapper-grid" id="trapper-hats"></div>
+  <div class="subsection-label" style="margin-top:0.5rem;">Vests</div>
+  <div class="trapper-grid" id="trapper-vests"></div>
+  <div class="subsection-label" style="margin-top:0.5rem;">Chaps</div>
+  <div class="trapper-grid" id="trapper-chaps"></div>
+  <div class="subsection-label" style="margin-top:0.5rem;">Boots</div>
+  <div class="trapper-grid" id="trapper-boots"></div>
+  <div class="subsection-label" style="margin-top:0.5rem;">Saddles</div>
+  <div class="trapper-grid" id="trapper-saddles"></div>
+</div>
+
+<div class="section">
+  <h2>&#x2B21; Trinkets &amp; Talismans <span class="section-count" id="trinkets-count"></span></h2>
+  <div class="subsection-label">Trinkets</div>
+  <div class="pearson-grid" id="trinkets"></div>
+  <div class="subsection-label" style="margin-top:0.5rem;">Talismans</div>
+  <div class="pearson-grid" id="talismans"></div>
+  <div class="subsection-label" style="margin-top:0.5rem;">Found</div>
+  <div class="found-grid" id="found-items"></div>
+</div>
+
+</div>
+<script>
+var SK = 'rdr2checklist';
+var D = {
+  trapperGarments:[
+    ['The Bear Hunter',          ['Legendary Bear Pelt',1],['Bison Pelt',1],['Bull Hide',1],['Boar Pelt',1],['Rabbit Pelt',2]],
+    ['The Trophy Buck',          ['Raccoon Pelt',1],['Beaver Pelt',1],['Hawk Feather',2],['Legendary Buck Pelt',1],['Ram Hide',1],['Legendary Fox Pelt',1],['Elk Pelt',1]],
+    ['The Dreamcatcher',         ['Legendary Beaver Pelt',1],['Legendary Boar Pelt',1],['Cardinal Feather',1],['Legendary Tatanka Bison Pelt',1]],
+    ['The Beast of Prey',        ['Legendary Cougar Pelt',1],['Turkey Feather',2],['Legendary Wolf Pelt',1],['Goat Hide',1],['Boar Pelt',2],['Bull Hide',1]],
+    ['The Huntsman',             ['Legendary Coyote Pelt',1],['Eagle Feather',2],['Legendary Pronghorn Hide',1],['Moose Pelt',1],['Fox Pelt',2],['Cow Hide',1],['Goat Hide',1],['Muskrat Pelt',1]],
+    ['The Death Roll',           ['Legendary Alligator Skin',1],['Snake Skin',2],['Legendary Panther Pelt',1],['Gila Monster Skin',1]],
+    ['The Stalker',              ['Legendary Ram Hide',1],['Legendary Moose Pelt',1],['Wolf Pelt',1],['Cow Hide',1],['Boar Pelt',1]],
+    ['The Ghost Bison',          ['Legendary White Bison Pelt',1],['Legendary Elk Pelt',1],['Sheep Hide',1],['Goat Hide',1]],
+    ['The Rattler',              ['Ram Hide',1],['Pronghorn Hide',1],['Collared Peccary Pig Pelt',2],['Snake Skin',1],['Iguana Skin',1]],
+    ['The Wrangler',             ['Pronghorn Hide',1],['Goat Hide',2],['Sheep Hide',1],['Panther Pelt',1],['Buck Pelt',1],['Moose Pelt',1]],
+    ['The Bronco Buster',        ['Elk Pelt',1],['Ox Hide',1],['Coyote Pelt',1],['Sheep Hide',1],['Deer Pelt',1],['Boar Pelt',2],['Pig Hide',1]],
+    ['The Marauder',             ['Rabbit Pelt',4],['Muskrat Pelt',1],['Cow Hide',1],['Deer Pelt',1],['Bull Hide',1],['Boar Pelt',1],['Snake Skin',1]],
+    ['The Bounty Hunter',        ['Bison Pelt',1],['Cow Hide',1],['Beaver Pelt',2],['Sheep Hide',2],['Pronghorn Hide',1],['Buck Pelt',1]],
+    ['The Desperado',            ['Beaver Pelt',2],['Ram Hide',1],['Wolf Pelt',1],['Armadillo Skin',2],['Goat Hide',1],['Ox Hide',1],['Boar Pelt',1],['Rabbit Pelt',1],['Muskrat Pelt',2]],
+    ['The Night Wrangler',       ['Coyote Pelt',2],['Cougar Pelt',2],['Black Bear Pelt',1],['Wolf Pelt',1],['Panther Pelt',1],['Moose Pelt',1],['Badger Pelt',1]],
+    ['The Mountain Man',         ['Muskrat Pelt',1],['Beaver Pelt',2],['Ram Hide',2],['Buck Pelt',1],['Elk Pelt',1]]
+  ],
+  trapperHats:[
+    ['Badger Mountain Hat',             ['Badger Pelt',1]],
+    ['Beaver Mountain Hat',             ['Beaver Pelt',1]],
+    ['Fox Mountain Hat',                ['Fox Pelt',1]],
+    ['Skunk Mountain Hat',              ['Skunk Pelt',1]],
+    ['Bear Grenadier Hat',              ['Black Bear Pelt',1]],
+    ['Squirrel Flat Cap',               ['Squirrel Pelt',6]],
+    ['Rat Flat Cap',                    ['Rat Pelt',10]],
+    ['Snake Bulldogger Hat',            ['Sheep Hide',1],['Snake Skin',1]],
+    ['Iguana Big Valley Hat',           ['Cow Hide',1],['Iguana Skin',1]],
+    ['Gila Monster Gambler\'s Hat',     ['Elk Pelt',1],['Gila Monster Skin',1]],
+    ['Pronghorn Flat Cap',              ['Pronghorn Hide',1],['Opossum Pelt',4]],
+    ['Deer Calvary Hat',                ['Deer Pelt',1],['Raven Feather',10]],
+    ['Bison Gambler\'s Hat',            ['Bison Pelt',1],['Robin Feather',4],['Oriole Feather',4]],
+    ['Rat Infantry Hardee Hat',         ['Goat Hide',1],['Rat Pelt',6]],
+    ['Stalker Accessory',               ['Loon Feather',2],['Condor Feather',1],['Raven Feather',3]],
+    ['Scavenger Accessory',             ['Vulture Feather',1],['Seagull Feather',1]],
+    ['Native Accessory',                ['Pheasant Feather',1],['Sparrow Feather',4],['Robin Feather',3]],
+    ['Pilgrim Accessory',               ['Turkey Feather',1],['Cedar Waxwing Feather',2],['Bluejay Feather',3]],
+    ['Huntsman Accessory',              ['Boar Pelt',1],['Hawk Feather',1],['Quail Feather',2]],
+    ['Pioneer Accessory',               ['Turkey Feather',3],['Duck Feather',3],['Chicken Feather',3]],
+    ['Rococo Accessory',                ['Crow Feather',2],['Cardinal Feather',2]],
+    ['Glorious Accessory',              ['Oriole Feather',1],['Woodpecker Feather',4]],
+    ['Pursuer Accessory',               ['Eagle Feather',2],['Pigeon Feather',2]],
+    ['Majestic Accessory',              ['Rooster Feather',4],['Woodpecker Feather',2],['Songbird Feather',2]],
+    ['Homestead Accessory',             ['Chicken Feather',1],['Goose Feather',2]],
+    ['Judicious Accessory',             ['Pheasant Feather',1],['Owl Feather',1]]
+  ],
+  trapperVests:[
+    ['Hinterland Vest',             ['Ram Hide',1]],
+    ['Rugged Wrangler Vest',        ['Pig Hide',1]],
+    ['Rustic Vest',                 ['Cougar Pelt',1]]
+  ],
+  trapperChaps:[
+    ['Batwing Chaps',               ['Deer Pelt',1]],
+    ['Bear Batwing Chaps',          ['Bear Pelt',1]],
+    ['Bear Fringed Shotgun Chaps',  ['Black Bear Pelt',1]],
+    ['Deer Pelt Half Chaps',        ['Deer Pelt',1]],
+    ['Elk Fringed Shotgun Chaps',   ['Elk Pelt',1]],
+    ['Moose Batwing Chaps',         ['Moose Pelt',1]],
+    ['Muskrat Half Chaps',          ['Muskrat Pelt',2]],
+    ['Ox Fringed Shotgun Chaps',    ['Ox Hide',1]],
+    ['Sheep Batwing Chaps',         ['Sheep Hide',2]]  
+  ],
+  trapperBoots:[
+    ['Javelina Moccasins',          ['Collared Peccary Pig Pelt',2]],
+    ['Skunk Trapper Boots',         ['Skunk Pelt',2]],
+    ['Moccasins',                   ['Buck Pelt',1]]
+  ],
+  trapperSaddles:[
+    ['Rattlesnake Vaquero Saddle',   ['Snake Skin',10]],
+    ['Cougar McClelland Saddle',    ['Cougar Pelt',1]],
+    ['Boar Mother Hubbard',         ['Boar Pelt',1]],
+    ['Alligator Ranch Cutter Saddle',['Alligator Skin',1]],
+    ['Bear Dakota Saddle',          ['Bear Pelt',1]],
+    ['Beaver Roping Saddle',        ['Beaver Pelt',1]],
+    ['Panther Trail Saddle',        ['Panther Pelt',1]]
+  ],
+  pearsonSatchels:[
+    ['Tonics Satchel',             ['Deer Pelt',1],['Buck Pelt',1],['Elk Pelt',1]],
+    ['Ingredients Satchel',        ['Deer Pelt',1],['Badger Pelt',1],['Squirrel Pelt',1]],
+    ['Kit Satchel',                ['Deer Pelt',1],['Elk Pelt',1],['Panther Pelt',1]],
+    ['Provisions Satchel',         ['Deer Pelt',1],['Bison Pelt',1],['Raccoon Pelt',1]],
+    ['Materials Satchel',          ['Deer Pelt',1],['Boar Pelt',1],['Iguana Skin',1]],
+    ['Valuables Satchel',          ['Deer Pelt',1],['Beaver Pelt',1],['Rabbit Pelt',1]],
+    ['Legend of the East Satchel', ['Deer Pelt',1],['Cougar Pelt',1],['Wolf Pelt',1]]
+  ],
+  pearsonCamp:[
+    ['Alligator Skull',               ['Alligator Skin',1]],
+    ['Big Horn Ram Skull',            ['Ram Carcass',1]],
+    ['Cougar Pelt Covered Chest',     ['Cougar Pelt',2]],
+    ['Boar Skin Table Cover',         ['Boar Pelt',1]],
+    ['Boar Skin Rug',                 ['Boar Pelt',4]],
+    ['Ox Hide Rug',                   ['Ox Hide',2]],
+    ['Pronghorn Leather Table Tops',  ['Pronghorn Hide',2]],
+    ['Pronghorn Skull',               ['Pronghorn Carcass',1]],
+    ['Moose Antlers',                 ['Moose Antler',1]],
+    ['Wolf Skull',                    ['Wolf Carcass',1]],
+    ['Snake Skin Banjo Head',         ['Snake Skin',2]],
+    ['Campfire Seat Cover',           ['Beaver Pelt',1],['Muskrat Pelt',1],['Fox Pelt',1]],
+    ['Campfire Log Seat Cover',       ['Wolf Pelt',2]],
+    ['Lean-to Cow Hide Ground Cover', ['Cow Hide',1]],
+    ['Scout Fire Ground Cover',       ['Goat Hide',2]],
+    ['Elk Antlers',                   ['Elk Antler',1]],
+    ['Hanging Bones',                 ['Buck Antlers',1]]
+  ],
+  legendary:[
+    ['Alligator'],['Bear'],['Beaver'],['Boar'],['Buck'],['Cougar'],
+    ['Coyote'],['Elk'],['Fox'],['Moose'],['Panther'],['Pronghorn'],
+    ['Ram'],['Tatanka Bison'],['White Bison'],['Wolf']
+  ],
+  // Trinkets: each requires one legendary part — [name, effect, ingredient]
+  trinkets:[
+    ['Beaver Tooth Trinket',        'Weapon degradation -10%',              ['Legendary Beaver Tooth',1]],
+    ['Buck Antler Trinket',         'Better quality animal skins',          ['Legendary Buck Antler',1]],
+    ['Cougar Fang Trinket',         'Stamina XP +10%',                      ['Legendary Cougar Fang',1]],
+    ['Coyote Fang Trinket',         'Dead Eye XP +10%',                     ['Legendary Coyote Fang',1]],
+    ['Elk Antler Trinket',          'Looted cash value +10%',               ['Legendary Elk Antler',1]],
+    ['Fox Claw Trinket',            'Eagle Eye duration +5s',            ['Legendary Fox Claw',1]],
+    ['Lion\'s Paw Trinket',            'Stamina XP +10%',                      ['Lion Paw',1]],
+    ['Moose Antler Trinket',        'Health XP +10%',                       ['Legendary Moose Antler',1]],
+    ['Panther\'s Eye Trinket',         'Dead Eye Core drain -10% (3s)',        ['Legendary Panther Eye',1]],
+    ['Pronghorn Horn Trinket',      'Carcasses do not decompose',           ['Legendary Pronghorn Horn',1]],
+    ['Ram Horn Trinket',            'Double oregano/thyme/mint collected',  ['Legendary Ram Horn',1]],
+    ['Tatanka Bison Horn Trinket',  'Melee damage received -10%',           ['Legendary Tatanka Bison Horn',1]],
+    ['Wolf Heart Trinket',          'Double alcohol tolerance',             ['Legendary Wolf Heart',1]]
+  ],
+  // Talismans: require legendary part + jewelry + special item
+  talismans:[
+    ['Alligator Tooth Talisman', 'Dead Eye Core drain -10%',
+      ['Legendary Alligator Tooth',1],['Vintage Civil War Handcuffs',1],['Gold Jointed Bracelet',1]],
+    ['Bear Claw Talisman',       'Health Core drain -10%',
+      ['Legendary Bear Claw',1],['Quartz Chunk',1],['Silver Chain Bracelet',1]],
+    ['Bison Horn Talisman',      'Stamina Core drain -10%',
+      ['Legendary Bison Horn',1],['Abalone Shell Fragment',1],['Silver Earring',1]],
+    ['Boar Tusk Talisman',       'Horse Health & Stamina Core drain -10%',
+      ['Legendary Boar Tusk',1],['Cobalt Petrified Wood',1],['Gold Earring',1]],
+    ['Raven Claw Talisman',      'Weapon degradation -20%',
+      ['Old Brass Compass',1]]
+  ]
+};
+
+var foundItems = [
+  ['Cat Eye Trinket',       'Fortifying tonic duration +20%',                 'Flat Iron Lake — lockbox on southernmost island near Braithwaite Manor'],
+  ['Crow Beak Trinket',     'Looted ammo +10%',                               'Coot\'s Chapel — final reward of The Elemental Trail treasure map chain'],
+  ['Hawk Talon Trinket',    'Stamina drain -30% when drawing a bow',          'Deadboot Creek — lockbox at destroyed campsite near top of the creek'],
+  ['Owl Feather Trinket',   'Health, Stamina & Dead Eye Core drain -15%',     'Given by Rains Fall — kill no one during "Archeology for Beginners"'],
+  ['Shark Tooth Trinket',   'Horse bonding XP +10%',                          'Roanoke Ridge — lockbox near beached ship east of Annesburg'],
+  ['Turtle Shell Trinket',  'Health bar refill speed +10%',                   'Gaptooth Breach — lockbox under stairs in largest building of complex'],
+];
+
+var state = {};
+try { state = JSON.parse(localStorage.getItem(SK) || '{}'); } catch(e) {}
+function save() { try { localStorage.setItem(SK, JSON.stringify(state)); } catch(e) {} }
+
+function nChecked(pfx, qty) {
+  var n = 0;
+  for (var i = 0; i < qty; i++) { if (state[pfx+':'+i]) n++; }
+  return n;
+}
+
+function updateProgress() {
+  var total = 0, done = 0;
+
+  var pt=0, pd=0;
+  document.querySelectorAll('.ing-box').forEach(function(b){ pt++; if(b.classList.contains('checked')) pd++; });
+  total+=pt; done+=pd;
+  // Split ing-boxes between pearson and trinkets sections
+  var tpd=0, tpt=0, ppt=0, ppd=0, trt=0, trd=0;
+  document.querySelectorAll('#trapper-garments .ing-box, #trapper-hats .ing-box, #trapper-vests .ing-box, #trapper-chaps .ing-box, #trapper-boots .ing-box, #trapper-saddles .ing-box').forEach(function(b){ tpt++; if(b.classList.contains('checked')) tpd++; });
+  document.querySelectorAll('#pearson-satchels .ing-box, #pearson-camp .ing-box').forEach(function(b){ ppt++; if(b.classList.contains('checked')) ppd++; });
+  document.querySelectorAll('#trinkets .ing-box, #talismans .ing-box').forEach(function(b){ trt++; if(b.classList.contains('checked')) trd++; });
+  document.querySelectorAll('#found-items .found-item').forEach(function(i){
+  trt++; if(i.classList.contains('checked')) trd++;});
+  document.getElementById('trapper-count').textContent = tpd+'/'+tpt;
+  document.getElementById('pearson-count').textContent = ppd+'/'+ppt;
+  document.getElementById('trinkets-count').textContent = trd+'/'+trt;
+
+  var lt=0, ld=0;
+  document.querySelectorAll('#legendary .item-single').forEach(function(s){ lt++; if(s.classList.contains('checked')) ld++; });
+  total+=lt; done+=ld;
+  document.getElementById('legendary-count').textContent = ld+'/'+lt;
+  document.querySelectorAll('#found-items .found-item').forEach(function(i){
+  trt++; if(i.classList.contains('checked')) trd++;});
+  document.getElementById('progressBar').style.width = (total ? done/total*100 : 0)+'%';
+  document.getElementById('progressLabel').textContent = done+' of '+total+' collected';
+}
+
+function buildSection(cid, rows, pfx) {
+  var el = document.getElementById(cid);
+  rows.forEach(function(row) {
+    var name=row[0], qty=row[1];
+    if (!qty || qty===1) {
+      var key=pfx+':'+name+':0';
+      var d=document.createElement('div');
+      d.className='item-single'+(state[key]?' checked':'');
+      d.innerHTML='<div class="box"></div><span class="label">'+name+'</span>';
+      d.addEventListener('click', function(){ state[key]=!state[key]; d.classList.toggle('checked',!!state[key]); save(); updateProgress(); });
+      el.appendChild(d);
+    } else {
+      var ent=document.createElement('div'); ent.className='entry'; ent.dataset.qty=qty;
+      var c0=nChecked(pfx+':'+name, qty); ent.dataset.checked=c0;
+      if(c0===qty) ent.classList.add('all-done');
+      var lbl=document.createElement('div'); lbl.className='entry-label'; lbl.textContent=name+' ('+c0+'/'+qty+')';
+      ent.appendChild(lbl);
+      var br=document.createElement('div'); br.className='boxes-row';
+      for(var i=0;i<qty;i++){
+        (function(idx){
+          var key=pfx+':'+name+':'+idx;
+          var it=document.createElement('div'); it.className='item'+(state[key]?' checked':'');
+          it.innerHTML='<div class="box"></div>';
+          it.addEventListener('click', function(){
+            state[key]=!state[key]; it.classList.toggle('checked',!!state[key]);
+            var nc=nChecked(pfx+':'+name, qty);
+            ent.dataset.checked=nc; lbl.textContent=name+' ('+nc+'/'+qty+')';
+            ent.classList.toggle('all-done', nc===qty);
+            save(); updateProgress();
+          });
+          br.appendChild(it);
+        })(i);
+      }
+      ent.appendChild(br); el.appendChild(ent);
+    }
+  });
+}
+
+function buildUpgrades(cid, rows, pfx) {
+  var el = document.getElementById(cid);
+  rows.forEach(function(row) {
+    var uName=row[0], ings=row.slice(1);
+    // For trinkets/talismans rows have [name, effectStr, ...ing arrays]
+    // For pearson rows have [name, ...ing arrays]
+    // Detect: if second element is a string (effect), skip it
+    var effect = null;
+    if (typeof ings[0] === 'string') { effect = ings[0]; ings = ings.slice(1); }
+    var uPfx=pfx+':'+uName;
+    var totalIng=0; ings.forEach(function(g){ totalIng+=g[1]; });
+    var checkedIng=0; ings.forEach(function(g){ checkedIng+=nChecked(uPfx+':'+g[0], g[1]); });
+
+    var grp=document.createElement('div');
+    grp.className='upgrade-group'+(checkedIng===totalIng?' all-done':'');
+    var gn=document.createElement('div'); gn.className='upgrade-group-name'; gn.textContent=uName;
+    grp.appendChild(gn);
+    if (effect) {
+      var ef=document.createElement('div');
+      ef.style.cssText='font-size:0.62rem;color:var(--fade);font-style:italic;padding-left:0.1rem;margin-bottom:0.2rem;opacity:0.8';
+      ef.textContent=effect;
+      grp.appendChild(ef);
+    }
+    var il=document.createElement('div'); il.className='upgrade-ingredients';
+    ings.forEach(function(ing) {
+      var iName=ing[0], qty=ing[1];
+      var iRow=document.createElement('div'); iRow.className='ing-row';
+      var ic=nChecked(uPfx+':'+iName, qty);
+      if(ic===qty) iRow.classList.add('all-done');
+      var iLbl=document.createElement('span'); iLbl.className='ing-label'; iLbl.textContent=iName;
+      iRow.appendChild(iLbl);
+      for(var i=0;i<qty;i++){
+        (function(idx){
+          var key=uPfx+':'+iName+':'+idx;
+          var box=document.createElement('div');
+          box.className='ing-box'+(state[key]?' checked':'');
+          box.addEventListener('click', function(e){
+            e.stopPropagation();
+            state[key]=!state[key]; box.classList.toggle('checked',!!state[key]);
+            var nc=nChecked(uPfx+':'+iName, qty);
+            iRow.classList.toggle('all-done', nc===qty);
+            var gd=0; ings.forEach(function(g){ gd+=nChecked(uPfx+':'+g[0], g[1]); });
+            grp.classList.toggle('all-done', gd===totalIng);
+            save(); updateProgress();
+          });
+          iRow.appendChild(box);
+        })(i);
+      }
+      il.appendChild(iRow);
+    });
+    grp.appendChild(il); el.appendChild(grp);
+  });
+}
+
+function buildLegendary() {
+  var el=document.getElementById('legendary');
+  D.legendary.forEach(function(row){
+    var name=row[0], key='legendary:'+name+':0';
+    var d=document.createElement('div');
+    d.className='item-single'+(state[key]?' checked':'');
+    d.innerHTML='<span class="label">'+name+'</span><div class="box"></div>';
+    d.addEventListener('click', function(){ state[key]=!state[key]; d.classList.toggle('checked',!!state[key]); save(); updateProgress(); });
+    el.appendChild(d);
+  });
+}
+
+function buildFoundItems(cid, rows, pfx) {
+  var el = document.getElementById(cid);
+  rows.forEach(function(row) {
+    var name=row[0], effect=row[1], location=row[2];
+    var key = pfx+':found:'+name;
+    var d = document.createElement('div');
+    d.className = 'found-item' + (state[key] ? ' checked' : '');
+    d.innerHTML =
+      '<div class="found-item-header">' +
+        '<span class="found-item-name">'+name+'</span>' +
+        '<div class="box"></div>' +
+      '</div>' +
+      '<div class="found-item-effect">'+effect+'</div>' +
+      '<div class="found-item-location">&#x21B3; '+location+'</div>';
+    d.addEventListener('click', function() {
+      state[key] = !state[key];
+      d.classList.toggle('checked', !!state[key]);
+      save();
+      updateProgress();
+    });
+    el.appendChild(d);
+  });
+}
+
+buildUpgrades('pearson-satchels', D.pearsonSatchels, 'satchel');
+buildUpgrades('pearson-camp', D.pearsonCamp, 'camp');
+buildLegendary();
+buildUpgrades('trapper-garments', D.trapperGarments, 'garment');
+buildUpgrades('trapper-hats', D.trapperHats, 'hat');
+buildUpgrades('trapper-vests', D.trapperVests, 'vest');
+buildUpgrades('trapper-chaps', D.trapperChaps, 'chaps');
+buildUpgrades('trapper-boots', D.trapperBoots, 'boot');
+buildUpgrades('trapper-saddles', D.trapperSaddles, 'saddle');
+buildUpgrades('trinkets', D.trinkets, 'trinket');
+buildUpgrades('talismans', D.talismans, 'talisman');
+buildFoundItems('found-items', foundItems, 'found');
+updateProgress();
+</script>
+</body>
+</html>
