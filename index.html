@@ -129,10 +129,12 @@ h2 .section-count{font-family:'Courier Prime',monospace;font-size:0.7rem;color:v
 
 <div class="section">
   <h2>&#x2B21; Challenges</h2>
-  <div class="subsection-label">Herbalist Challenge 9 <span class="section-count" id="herbs-count"></span></div>
+  <div class="subsection-label">Herbalist 9 <span class="section-count" id="herbs-count"></span></div>
   <div class="herb-grid" id="herbs"></div>
-  <div class="subsection-label" style="margin-top:0.5rem">Horseman Challenge 10 <span class="section-count" id="horses-count"></span></div>
+  <div class="subsection-label" style="margin-top:0.5rem">Horseman 10 <span class="section-count" id="horses-count"></span></div>
   <div class="horse-grid" id="horses"></div>
+  <div class="subsection-label" style="margin-top:0.5rem">Survivalist 10 <span class="section-count" id="survivalist-fish-count"></span></div>
+  <div class="horse-grid" id="survivalist-fish"></div>
 </div>
 
 </div><!-- .page -->
@@ -302,7 +304,7 @@ var D = {
   ],
 
   // ── Challenges ────────────────────────────────────────────────────
-  // Herbs grouped by region; horses are simple checkboxes
+  // Herbs grouped by region; horses are simple checkboxes; fish are simple checkboxes
   herbs:[
     ['Lemoyne',
       ['Acuna\'s Star Orchid',1],['Chanterelles',1],['Cigar Orchid',1],['Clamshell Orchid',1],
@@ -335,6 +337,11 @@ var D = {
   wildHorses:[
     ['American Paint'],['American Standardbred'],['Appaloosa'],['Hungarian Halfbred'],
     ['Kentucky Saddler'],['Morgan'],['Mustang'],['Nokota'],['Tennessee Walker']
+  ],
+  survivalistFish:[
+    ['Redfin Pickerel'],['Perch'],['Bullhead Catfish'],['Chain Pickerel'],['Rock Bass'],
+    ['Bluegill'],['Muskie'],['Lake Sturgeon'],['Northern Pike'],['Sockeye Salmon'],
+    ['Longnose Gar'],['Channel Catfish'],['Largemouth Bass'],['Smallmouth Bass'],['Steelhead Trout']
   ]
 };
 
@@ -415,6 +422,7 @@ function updateProgress() {
   labelFound('found-items',  'found-count');
   labelIngBoxes('herbs',     'herbs-count');   // herbs: each individual herb counts
   labelSimple('horses',      'horses-count');
+  labelSimple('survivalist-fish', 'survivalist-fish-count');
 
   // -- Overall progress bar: every individual checkbox/ingredient --
   document.querySelectorAll('#pearson-satchels .ing-box, #pearson-camp .ing-box').forEach(function(b){ total++; if(b.classList.contains('checked')) done++; });
@@ -424,6 +432,7 @@ function updateProgress() {
   document.querySelectorAll('#found-items .found-item').forEach(function(i){ total++; if(i.classList.contains('checked')) done++; });
   document.querySelectorAll('#herbs .ing-box').forEach(function(b){ total++; if(b.classList.contains('checked')) done++; });
   document.querySelectorAll('#horses .item-single').forEach(function(s){ total++; if(s.classList.contains('checked')) done++; });
+  document.querySelectorAll('#survivalist-fish .item-single').forEach(function(s){ total++; if(s.classList.contains('checked')) done++; });
 
   document.getElementById('progressBar').style.width = (total ? done/total*100 : 0)+'%';
   document.getElementById('progressLabel').textContent = done+' of '+total+' collected';
@@ -553,6 +562,7 @@ buildUpgrades('talismans',         D.talismans,        'talisman');
 buildFoundItems('found-items',     foundItems,         'found');
 buildUpgrades('herbs',             D.herbs,            'herb');
 buildSimpleGrid('horses',          D.wildHorses,       'horse');
+buildSimpleGrid('survivalist-fish', D.survivalistFish, 'survivalist-fish');
 updateProgress();
 </script>
 </body>
